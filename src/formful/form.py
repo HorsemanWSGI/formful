@@ -1,16 +1,28 @@
+import itertools
 import typing as t
+from .fields.core import Field, UnboundField
+from .schema import Schema, SchemaMeta
+from .behavior import Behavior, DEFAULT_BEHAVIOR
+from collections import OrderedDict
+from formful.utils import unset_value
 
 
-SEPARATOR =
+Fields = t.Mapping[str, UnboundField]
+
 
 class Form:
 
-    prefix: str = ""
-    fields: t.Mapping[str, Field]
-    behavior: t.Any
+    fields: Fields
+    behavior: Behavior
+    prefix: str
     form_errors: t.Iterable[str]
 
-    def __init__(self, fields, prefix=None, behavior=None):
+    def __init__(self,
+                 fields: t.Optional[t.Union[Fields, Schema]] = None,
+                 prefix="",
+                 translations=None,
+                 behavior=DEFAULT_BEHAVIOR):
+
         self.form_errors = []
         if prefix:
             if prefix[-1] not in "-_;:/.":
@@ -18,42 +30,45 @@ class Form:
             self.prefix = prefix
 
         self.behavior = behavior
-        self._prefix = prefix
+        self.prefix = prefix
+        self.translations = None
         self.fields = OrderedDict()
 
-        translations = self.meta.get_translations(self)
-        extra_fields = []
-        if meta.csrf:
-            self._csrf = meta.build_csrf(self)
-            extra_fields.extend(self._csrf.setup_form(self))
+        if fields is not None:
+            if isinstance(fields, SchemaMeta):
+                fields = fields.get_fields()
+            if not isinstance(fields, dict):
+                raise NotImplementedError('Fields must be dict.')
 
-        for name, unbound_field in itertools.chain(fields, extra_fields):
-            field_name = unbound_field.name or name
-            options = dict(name=field_name, prefix=prefix, translations=translations)
-            field = meta.bind_field(self, unbound_field, options)
-            self._fields[name] = field
-
-
+            for name, unbound_field in fields.items():
+                field_name = unbound_field.name or name
+                options = {
+                    "name": field_name,
+                    "prefix": prefix,
+                    "translations": translations
+                }
+                field = behavior.bind_field(self, unbound_field, options)
+                self.fields[name] = field
 
     def __iter__(self):
         """Iterate form fields in creation order."""
-        return iter(self._fields.values())
+        return iter(self.fields.values())
 
     def __contains__(self, name):
         """ Returns `True` if the named field is a member of this form. """
-        return name in self._fields
+        return name in self.fields
 
     def __getitem__(self, name):
         """ Dict-style access to this form's fields."""
-        return self._fields[name]
+        return self.fields[name]
 
     def __setitem__(self, name, value):
         """ Bind a field to this form. """
-        self._fields[name] = value.bind(form=self, name=name, prefix=self._prefix)
+        self.fields[name] = value.bind(form=self, name=name, prefix=self.prefix)
 
     def __delitem__(self, name):
         """ Remove a field from this form. """
-        del self._fields[name]
+        del self.fields[name]
 
     def populate_obj(self, obj):
         """
@@ -62,7 +77,7 @@ class Form:
         :note: This is a destructive operation; Any attribute with the same name
                as a field will be overridden. Use with caution.
         """
-        for name, field in self._fields.items():
+        for name, field in self.fields.items():
             field.populate_obj(obj, name)
 
     def process(self, formdata=None, obj=None, data=None, extra_filters=None, **kwargs):
@@ -86,14 +101,12 @@ class Form:
             data as parameters. Overwrites any duplicate keys in
             ``data``. Only used if ``formdata`` is not passed.
         """
-        formdata = self.meta.wrap_formdata(self, formdata)
-
         if data is not None:
             kwargs = dict(data, **kwargs)
 
         filters = extra_filters.copy() if extra_filters is not None else {}
 
-        for name, field in self._fields.items():
+        for name, field in self.fields.items():
             field_extra_filters = filters.get(name, [])
 
             inline_filter = getattr(self, "filter_%s" % name, None)
@@ -119,7 +132,7 @@ class Form:
         Returns `True` if no errors occur.
         """
         success = True
-        for name, field in self._fields.items():
+        for name, field in self.fields.items():
             if extra_validators is not None and name in extra_validators:
                 extra = extra_validators[name]
             else:
@@ -130,11 +143,11 @@ class Form:
 
     @property
     def data(self):
-        return {name: f.data for name, f in self._fields.items()}
+        return {name: f.data for name, f in self.fields.items()}
 
     @property
     def errors(self):
-        errors = {name: f.errors for name, f in self._fields.items() if f.errors}
+        errors = {name: f.errors for name, f in self.fields.items() if f.errors}
         if self.form_errors:
             errors[None] = self.form_errors
         return errors

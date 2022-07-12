@@ -1,8 +1,8 @@
 from tests.common import DummyPostData
 
-from wtforms import validators
-from wtforms.fields import RadioField
-from wtforms.form import Form
+from formful import validators
+from formful.fields import RadioField
+from formful.form import Form
 
 
 def make_form(name="F", **fields):

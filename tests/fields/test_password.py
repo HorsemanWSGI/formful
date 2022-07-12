@@ -1,6 +1,6 @@
-from wtforms import widgets
-from wtforms.fields import PasswordField
-from wtforms.form import Form
+from formful import widgets
+from formful.fields import PasswordField
+from formful.form import Form
 
 
 class F(Form):

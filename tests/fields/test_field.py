@@ -1,12 +1,10 @@
 import pytest
 from markupsafe import Markup
 from tests.common import DummyPostData
-
-from wtforms import meta
-from wtforms import validators
-from wtforms.fields import Field
-from wtforms.fields import StringField
-from wtforms.form import Form
+from formful import validators
+from formful.fields import Field
+from formful.fields import StringField
+from formful.form import Form
 
 
 class F(Form):
@@ -47,17 +45,17 @@ def test_process_formdata():
     assert field.data == 42
 
 
-def test_meta_attribute():
-    # Can we pass in meta via _form?
+def test_behavior_attribute():
+    # Can we pass in behavior via _form?
     form = F()
-    assert form.a.meta is form.meta
+    assert form.a.behavior is form.behavior
 
-    # Can we pass in meta via _meta?
-    form_meta = meta.DefaultMeta()
-    field = StringField(name="Foo", _form=None, _meta=form_meta)
-    assert field.meta is form_meta
+    # Can we pass in behavior via _behavior?
+    form_behavior = behavior.DefaultMeta()
+    field = StringField(name="Foo", _form=None, _behavior=form_behavior)
+    assert field.behavior is form_behavior
 
-    # Do we fail if both _meta and _form are None?
+    # Do we fail if both _behavior and _form are None?
     with pytest.raises(TypeError):
         StringField(name="foo", _form=None)
 

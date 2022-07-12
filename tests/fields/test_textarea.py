@@ -1,11 +1,12 @@
-from wtforms.fields import TextAreaField
-from wtforms.form import Form
-
-
-class F(Form):
-    a = TextAreaField(default="LE DEFAULT")
+from formful.fields import TextAreaField
+from formful.form import Form
 
 
 def test_textarea_field():
-    form = F()
-    assert form.a() == """<textarea id="a" name="a">\r\nLE DEFAULT</textarea>"""
+    form = Form(
+        fields={"a": TextAreaField(default="LE DEFAULT")}
+    )
+    form.process()
+    assert form.fields['a']() == (
+        """<textarea id="a" name="a">\r\nLE DEFAULT</textarea>"""
+    )

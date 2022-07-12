@@ -2,8 +2,8 @@ from datetime import datetime
 
 from tests.common import DummyPostData
 
-from wtforms.fields import DateTimeField
-from wtforms.form import Form
+from formful.fields import DateTimeField
+from formful.form import Form
 
 
 def make_form(name="F", **fields):

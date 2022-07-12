@@ -1,11 +1,10 @@
 import pytest
 from tests.common import DummyPostData
 
-from wtforms import validators
-from wtforms.fields import FormField
-from wtforms.fields import StringField
-from wtforms.form import Form
-from wtforms.meta import DefaultMeta
+from formful import validators
+from formful.fields import FormField
+from formful.fields import StringField
+from formful.form import Form
 
 
 class AttrDict:
@@ -23,8 +22,8 @@ class ClassWithProperty(AttrDict):
         self.a_ = vars(value)
 
 
-def make_form(name="F", **fields):
-    return type(str(name), (Form,), fields)
+def make_form(**fields):
+    return Form(fields)
 
 
 @pytest.fixture

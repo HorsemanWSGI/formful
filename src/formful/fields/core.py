@@ -7,11 +7,11 @@ import warnings
 from markupsafe import escape
 from markupsafe import Markup
 
-from wtforms import widgets
-from wtforms.i18n import DummyTranslations
-from wtforms.utils import unset_value
-from wtforms.validators import StopValidation
-from wtforms.validators import ValidationError
+from formful import widgets
+from formful.i18n import DummyTranslations
+from formful.utils import unset_value
+from formful.validators import StopValidation
+from formful.validators import ValidationError
 
 __all__ = (
     "BooleanField",
@@ -50,7 +50,6 @@ class Field:
     widget = None
     _formfield = True
     _translations = DummyTranslations()
-    do_not_call_in_templates = True  # Allow Django 1.4 traversal
 
     def __new__(cls, *args, **kwargs):
         if "_form" in kwargs:
@@ -72,7 +71,7 @@ class Field:
         _form=None,
         _prefix="",
         _translations=None,
-        _meta=None,
+        _behavior=None,
     ):
         """
         Construct a new field.
@@ -108,8 +107,8 @@ class Field:
             A translations object providing message translations. Usually
             passed by the enclosing form during construction. See
             :doc:`I18n docs <i18n>` for information on message translations.
-        :param _meta:
-            If provided, this is the 'meta' instance from the form. You usually
+        :param _behavior:
+            If provided, this is the 'behavior' instance from the form. You usually
             don't pass this yourself.
         If `_form` isn't provided, an :class:`UnboundField` will be
         returned instead. Call its :func:`bind` method with a form instance and
@@ -118,12 +117,12 @@ class Field:
         if _translations is not None:
             self._translations = _translations
 
-        if _meta is not None:
-            self.meta = _meta
+        if _behavior is not None:
+            self.behavior = _behavior
         elif _form is not None:
-            self.meta = _form.meta
+            self.behavior = _form.behavior
         else:
-            raise TypeError("Must provide one of _form or _meta")
+            raise TypeError("Must provide one of _form or _behavior")
 
         self.default = default
         self.description = description
@@ -155,7 +154,7 @@ class Field:
             if isinstance(flags, tuple):  # pragma: no cover
                 warnings.warn(
                     "Flags should be stored in dicts and not in tuples. "
-                    "The next version of WTForms will abandon support "
+                    "The next version of Formful will abandon support "
                     "for flags in tuples.",
                     DeprecationWarning,
                     stacklevel=2,
@@ -183,15 +182,15 @@ class Field:
         """
         Render this field as HTML, using keyword args as additional attributes.
         This delegates rendering to
-        :meth:`meta.render_field <wtforms.meta.DefaultMeta.render_field>`
+        :meth:`behavior.render_field <formful.behavior.DefaultMeta.render_field>`
         whose default behavior is to call the field's widget, passing any
         keyword arguments from this call along to the widget.
-        In all of the WTForms HTML widgets, keyword arguments are turned to
+        In all of the Formful HTML widgets, keyword arguments are turned to
         HTML attributes, though in theory a widget is free to do anything it
         wants with the supplied keyword arguments, and widgets don't have to
         even do anything related to HTML.
         """
-        return self.meta.render_field(self, kwargs)
+        return self.behavior.render_field(self, kwargs)
 
     @classmethod
     def check_validators(cls, validators):
@@ -422,7 +421,7 @@ class Flags:
 
     def __repr__(self):
         flags = (name for name in dir(self) if not name.startswith("_"))
-        return "<wtforms.fields.Flags: {%s}>" % ", ".join(flags)
+        return "<formful.fields.Flags: {%s}>" % ", ".join(flags)
 
 
 class Label:
@@ -478,7 +477,7 @@ class SelectFieldBase(Field):
 
     def __iter__(self):
         opts = dict(
-            widget=self.option_widget, name=self.name, _form=None, _meta=self.meta
+            widget=self.option_widget, name=self.name, _form=None, _behavior=self.behavior
         )
         for i, (value, label, checked) in enumerate(self.iter_choices()):
             opt = self._Option(label=label, id="%s-%d" % (self.id, i), **opts)
@@ -655,7 +654,7 @@ class LocaleAwareNumberField(Field):
         self.use_locale = use_locale
         if use_locale:
             self.number_format = number_format
-            self.locale = kwargs["_form"].meta.locales[0]
+            self.locale = kwargs["_form"].behavior.locales[0]
             self._init_babel()
 
     def _init_babel(self):
@@ -1174,7 +1173,7 @@ class FieldList(Field):
             name=name,
             prefix=self._prefix,
             id=id,
-            _meta=self.meta,
+            _behavior=self.behavior,
             translations=self._translations,
         )
         field.process(formdata, data)

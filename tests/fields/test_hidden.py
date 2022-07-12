@@ -1,5 +1,5 @@
-from wtforms.fields import HiddenField
-from wtforms.form import Form
+from formful.fields import HiddenField
+from formful.form import Form
 
 
 class F(Form):

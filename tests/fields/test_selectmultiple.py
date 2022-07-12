@@ -1,27 +1,28 @@
 import pytest
 from tests.common import DummyPostData
 
-from wtforms import validators
-from wtforms.fields import SelectField
-from wtforms.fields import SelectMultipleField
-from wtforms.form import Form
+from formful import validators
+from formful.fields import SelectField
+from formful.fields import SelectMultipleField
+from formful.form import Form
 
 
-def make_form(name="F", **fields):
-    return type(str(name), (Form,), fields)
+def make_form(**fields):
+    return Form(fields)
 
 
-class F(Form):
+schema = dict(
     a = SelectMultipleField(
         choices=[("a", "hello"), ("b", "bye"), ("c", "something")], default=("a",)
-    )
+    ),
     b = SelectMultipleField(
         coerce=int, choices=[(1, "A"), (2, "B"), (3, "C")], default=("1", "3")
     )
+)
 
 
 def test_defaults():
-    form = F()
+    form = Form(schema)
     assert form.a.data == ["a"]
     assert form.b.data == [1, 3]
     # Test for possible regression with null data
@@ -31,7 +32,8 @@ def test_defaults():
 
 
 def test_with_data():
-    form = F(DummyPostData(a=["a", "c"]))
+    form = Form(schema)
+    form.process(DummyPostData(a=["a", "c"]))
     assert form.a.data == ["a", "c"]
     assert list(form.a.iter_choices()) == [
         ("a", "hello", True),
@@ -48,7 +50,8 @@ def test_with_data():
 
 
 def test_coerce_fail():
-    form = F(b=["a"])
+    form = Form(schema)
+    form = form.process(b=["a"])
     assert form.validate()
     assert form.b.data is None
     form = F(DummyPostData(b=["fake"]))

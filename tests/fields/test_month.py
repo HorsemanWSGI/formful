@@ -2,8 +2,8 @@ from datetime import date
 
 from tests.common import DummyPostData
 
-from wtforms.fields import MonthField
-from wtforms.form import Form
+from formful.fields import MonthField
+from formful.form import Form
 
 
 class F(Form):

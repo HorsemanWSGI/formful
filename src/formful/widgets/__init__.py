@@ -1,3 +1,3 @@
-from wtforms.widgets.core import *
-from wtforms.widgets.core import html_params
-from wtforms.widgets.core import Input
+from formful.widgets.core import *
+from formful.widgets.core import html_params
+from formful.widgets.core import Input

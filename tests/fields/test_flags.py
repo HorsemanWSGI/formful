@@ -1,13 +1,15 @@
 import pytest
 
-from wtforms import validators
-from wtforms.fields import StringField
-from wtforms.form import Form
+from formful import validators
+from formful.fields import StringField
+from formful.form import Form
 
 
 @pytest.fixture()
 def flags():
-    return StringField(validators=[validators.DataRequired()]).bind(Form(), "a").flags
+    return StringField(
+        validators=[validators.DataRequired()]
+    ).bind(Form(), "a").flags
 
 
 def test_existing_values(flags):
@@ -31,7 +33,7 @@ def test_unset(flags):
 
 
 def test_repr(flags):
-    assert repr(flags) == "<wtforms.fields.Flags: {required}>"
+    assert repr(flags) == "<formful.fields.Flags: {required}>"
 
 
 def test_underscore_property(flags):

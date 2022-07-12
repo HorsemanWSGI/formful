@@ -5,6 +5,7 @@ setup(
     name='formful',
     install_requires = [
         'markup',
+        'markupsafe',
     ],
     extras_require={
         'test': [

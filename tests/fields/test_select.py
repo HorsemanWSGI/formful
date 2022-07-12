@@ -1,10 +1,10 @@
 import pytest
 from tests.common import DummyPostData
 
-from wtforms import validators
-from wtforms import widgets
-from wtforms.fields import SelectField
-from wtforms.form import Form
+from formful import validators
+from formful import widgets
+from formful.fields import SelectField
+from formful.form import Form
 
 
 def make_form(name="F", **fields):

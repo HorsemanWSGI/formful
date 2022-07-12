@@ -4,23 +4,23 @@ from decimal import Decimal
 
 from tests.common import DummyPostData
 
-from wtforms import validators
-from wtforms.fields import DateField
-from wtforms.fields import DateTimeField
-from wtforms.fields import DateTimeLocalField
-from wtforms.fields import DecimalField
-from wtforms.fields import DecimalRangeField
-from wtforms.fields import EmailField
-from wtforms.fields import IntegerField
-from wtforms.fields import IntegerRangeField
-from wtforms.fields import PasswordField
-from wtforms.fields import SearchField
-from wtforms.fields import StringField
-from wtforms.fields import TelField
-from wtforms.fields import TextAreaField
-from wtforms.fields import URLField
-from wtforms.form import Form
-from wtforms.utils import unset_value
+from formful import validators
+from formful.fields import DateField
+from formful.fields import DateTimeField
+from formful.fields import DateTimeLocalField
+from formful.fields import DecimalField
+from formful.fields import DecimalRangeField
+from formful.fields import EmailField
+from formful.fields import IntegerField
+from formful.fields import IntegerRangeField
+from formful.fields import PasswordField
+from formful.fields import SearchField
+from formful.fields import StringField
+from formful.fields import TelField
+from formful.fields import TextAreaField
+from formful.fields import URLField
+from formful.form import Form
+from formful.utils import unset_value
 
 
 def make_form(name="F", **fields):
@@ -61,7 +61,7 @@ def test_simple():
     VALUES = (
         b("search", "search", 'type="search"'),
         b("telephone", "123456789", 'type="tel"'),
-        b("url", "http://wtforms.simplecodes.com/", 'type="url"'),
+        b("url", "http://formful.simplecodes.com/", 'type="url"'),
         b("email", "foo@bar.com", 'type="email"'),
         b(
             "datetime",

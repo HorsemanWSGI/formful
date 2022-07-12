@@ -2,8 +2,8 @@ from contextlib import contextmanager
 
 import pytest
 
-from wtforms.validators import StopValidation
-from wtforms.validators import ValidationError
+from formful.validators import StopValidation
+from formful.validators import ValidationError
 
 
 @pytest.fixture

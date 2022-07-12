@@ -4,8 +4,8 @@ from decimal import ROUND_UP
 
 from tests.common import DummyPostData
 
-from wtforms.fields import DecimalField
-from wtforms.form import Form
+from formful.fields import DecimalField
+from formful.form import Form
 
 
 def make_form(name="F", **fields):

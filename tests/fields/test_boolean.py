@@ -1,7 +1,7 @@
 from tests.common import DummyPostData
 
-from wtforms.fields import BooleanField
-from wtforms.form import Form
+from formful.fields import BooleanField
+from formful.form import Form
 
 
 class AttrDict:

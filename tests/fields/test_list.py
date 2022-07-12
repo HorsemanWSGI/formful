@@ -3,11 +3,11 @@ from collections import namedtuple
 import pytest
 from tests.common import DummyPostData
 
-from wtforms import validators
-from wtforms.fields import FieldList
-from wtforms.fields import FormField
-from wtforms.fields import StringField
-from wtforms.form import Form
+from formful import validators
+from formful.fields import FieldList
+from formful.fields import FormField
+from formful.fields import StringField
+from formful.form import Form
 
 
 class AttrDict:
