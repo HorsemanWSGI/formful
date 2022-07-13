@@ -1,9 +1,9 @@
 import itertools
 import typing as t
-from .fields.core import Field, UnboundField
-from .schema import Schema, SchemaMeta
-from .behavior import Behavior, DEFAULT_BEHAVIOR
 from collections import OrderedDict
+from formful.fields import Field, UnboundField
+from formful.schema import Schema, SchemaMeta
+from formful.behavior import Behavior, DEFAULT_BEHAVIOR
 from formful.utils import unset_value
 
 
@@ -39,16 +39,18 @@ class Form:
                 fields = fields.get_fields()
             if not isinstance(fields, dict):
                 raise NotImplementedError('Fields must be dict.')
-
             for name, unbound_field in fields.items():
-                field_name = unbound_field.name or name
-                options = {
-                    "name": field_name,
-                    "prefix": prefix,
-                    "translations": translations
-                }
-                field = behavior.bind_field(self, unbound_field, options)
-                self.fields[name] = field
+                self[name] = unbound_field
+
+    @classmethod
+    def from_fields_mapping(cls, prefix="", translations=None,
+                            behavior=DEFAULT_BEHAVIOR, **fields):
+        return cls(
+            fields=fields,
+            prefix=prefix,
+            translations=translations,
+            behavior=behavior
+        )
 
     def __iter__(self):
         """Iterate form fields in creation order."""
@@ -62,9 +64,17 @@ class Form:
         """ Dict-style access to this form's fields."""
         return self.fields[name]
 
-    def __setitem__(self, name, value):
+    def __setitem__(self, name, unbound_field):
         """ Bind a field to this form. """
-        self.fields[name] = value.bind(form=self, name=name, prefix=self.prefix)
+        field_name = unbound_field.name or name
+        options = {
+            "name": field_name,
+            "prefix": self.prefix,
+            "translations": self.translations
+        }
+        self.fields[name] = self.behavior.bind_field(
+            self, unbound_field, options
+        )
 
     def __delitem__(self, name):
         """ Remove a field from this form. """
@@ -151,3 +161,6 @@ class Form:
         if self.form_errors:
             errors[None] = self.form_errors
         return errors
+
+    def __call__(self):
+        return self.behavior.render_form(self)

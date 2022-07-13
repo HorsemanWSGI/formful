@@ -1,24 +1,28 @@
 import inspect
 import typing
-from collections import OrderedDict
 from abc import ABCMeta
-from .fields import Field
+from collections import OrderedDict
+from formful.fields import UnboundField
 
 
 def get_fields(*bases: typing.Type):
     for cls in bases:
         for name, member in inspect.getmembers(cls, predicate=(
-                lambda x: isinstance(x, Field))):
+                lambda x: isinstance(x, UnboundField))):
             yield name, member
 
 
 class SchemaMeta(ABCMeta):
 
     def __new__(cls, name, bases, attrs):
+        if not bases:
+            # Enum itself
+            return super().__new__(cls, name, bases, attrs)
+
         if '_fields' not in attrs:
             fields = OrderedDict(list(get_fields(*bases)))
             for attr, value in attrs.items():
-                if isinstance(value, Field):
+                if isinstance(value, UnboundField):
                     if attr[0] != '_':
                         fields[attr] = value
             attrs['_fields'] = fields
@@ -29,5 +33,6 @@ class SchemaMeta(ABCMeta):
 
 class Schema(metaclass=SchemaMeta):
 
-    def get_fields(self):
-        return self._fields
+    @classmethod
+    def get_fields(cls):
+        return cls._fields

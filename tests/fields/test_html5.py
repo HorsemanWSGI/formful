@@ -8,8 +8,6 @@ from formful import validators
 from formful.fields import DateField
 from formful.fields import DateTimeField
 from formful.fields import DateTimeLocalField
-from formful.fields import DecimalField
-from formful.fields import DecimalRangeField
 from formful.fields import EmailField
 from formful.fields import IntegerField
 from formful.fields import IntegerRangeField
