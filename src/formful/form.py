@@ -16,12 +16,14 @@ class Form:
     behavior: Behavior
     prefix: str
     form_errors: t.Iterable[str]
+    extra_filters: t.Iterable
 
     def __init__(self,
                  fields: t.Optional[t.Union[Fields, Schema]] = None,
                  prefix="",
                  translations=None,
-                 behavior=DEFAULT_BEHAVIOR):
+                 behavior=DEFAULT_BEHAVIOR,
+                 extra_filters=None):
 
         self.form_errors = []
         if prefix:
@@ -33,6 +35,7 @@ class Form:
         self.prefix = prefix
         self.translations = None
         self.fields = OrderedDict()
+        self.extra_filters = extra_filters
 
         if fields is not None:
             if isinstance(fields, SchemaMeta):
@@ -41,16 +44,6 @@ class Form:
                 raise NotImplementedError('Fields must be dict.')
             for name, unbound_field in fields.items():
                 self[name] = unbound_field
-
-    @classmethod
-    def from_fields_mapping(cls, prefix="", translations=None,
-                            behavior=DEFAULT_BEHAVIOR, **fields):
-        return cls(
-            fields=fields,
-            prefix=prefix,
-            translations=translations,
-            behavior=behavior
-        )
 
     def __iter__(self):
         """Iterate form fields in creation order."""
@@ -119,9 +112,8 @@ class Form:
         for name, field in self.fields.items():
             field_extra_filters = filters.get(name, [])
 
-            inline_filter = getattr(self, "filter_%s" % name, None)
-            if inline_filter is not None:
-                field_extra_filters.append(inline_filter)
+            if self.extra_filters is not None and name in self.extra_filters:
+                field_extra_filters.extend(self.extra_filters[name])
 
             if obj is not None and hasattr(obj, name):
                 data = getattr(obj, name)

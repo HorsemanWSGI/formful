@@ -1,5 +1,4 @@
 import pytest
-
 from formful.fields import SelectFieldBase
 from formful.fields import StringField
 from formful.form import Form
@@ -13,19 +12,20 @@ class MyCustomField(StringField):
         return super().process_data(data)
 
 
-class F(Form):
-    a = MyCustomField()
-    b = SelectFieldBase()
+F  = Form(fields={
+    'a': MyCustomField(),
+    'b': SelectFieldBase()
+})
 
 
 def test_processing_failure():
-    form = F(a="42")
-    assert form.validate()
-    form = F(a="fail")
-    assert not form.validate()
+    F.process(a="42")
+    assert F.validate()
+    F.process(a="fail")
+    assert not F.validate()
 
 
 def test_default_impls():
-    f = F()
+    F.process()
     with pytest.raises(NotImplementedError):
-        f.b.iter_choices()
+        F['b'].iter_choices()

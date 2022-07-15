@@ -5,35 +5,31 @@ from formful import validators
 from formful import widgets
 from formful.fields import SelectField
 from formful.form import Form
-
-
-def make_form(name="F", **fields):
-    return type(str(name), (Form,), fields)
+from formful.schema import Schema
 
 
 def test_select_field_copies_choices():
-    class F(Form):
-        items = SelectField(choices=[])
 
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
+    fields = {
+        'items': SelectField(choices=[])
+    }
+    f1 = Form(fields=fields)
+    f2 = Form(fields=fields)
 
-        def add_choice(self, choice):
-            self.items.choices.append((choice, choice))
+    f1['items'].choices.append(("a", "a"))
+    f2['items'].choices.append(("b", "b"))
 
-    f1 = F()
-    f2 = F()
-
-    f1.add_choice("a")
-    f2.add_choice("b")
-
-    assert f1.items.choices == [("a", "a")]
-    assert f2.items.choices == [("b", "b")]
-    assert f1.items.choices is not f2.items.choices
+    assert f1['items'].choices == [("a", "a")]
+    assert f2['items'].choices == [("b", "b")]
+    assert f1['items'].choices is not f2['items'].choices
 
 
-class F(Form):
-    a = SelectField(choices=[("a", "hello"), ("btest", "bye")], default="a")
+class MySchema(Schema):
+
+    a = SelectField(
+        choices=[("a", "hello"), ("btest", "bye")],
+        default="a"
+    )
     b = SelectField(
         choices=[(1, "Item 1"), (2, "Item 2")],
         coerce=int,
@@ -42,48 +38,52 @@ class F(Form):
 
 
 def test_defaults():
-    form = F()
-    assert form.a.data == "a"
-    assert form.b.data is None
+    form = Form(fields=MySchema)
+    form.process()
+    assert form['a'].data == "a"
+    assert form['b'].data is None
     assert form.validate() is False
-    assert form.a() == (
+    assert form['a']() == (
         '<select id="a" name="a"><option selected value="a">hello</option>'
         '<option value="btest">bye</option></select>'
     )
-    assert form.b() == (
+    assert form['b']() == (
         '<select id="b" name="b"><option value="1">Item 1</option>'
         '<option value="2">Item 2</option></select>'
     )
 
 
 def test_with_data():
-    form = F(DummyPostData(a=["btest"]))
-    assert form.a.data == "btest"
-    assert form.a() == (
+    form = Form(fields=MySchema)
+    form.process(DummyPostData(a=["btest"]))
+    assert form['a'].data == "btest"
+    assert form['a']() == (
         '<select id="a" name="a"><option value="a">hello</option>'
         '<option selected value="btest">bye</option></select>'
     )
 
 
 def test_value_coercion():
-    form = F(DummyPostData(b=["2"]))
-    assert form.b.data == 2
-    assert form.b.validate(form)
-    form = F(DummyPostData(b=["b"]))
-    assert form.b.data is None
-    assert not form.b.validate(form)
+    form = Form(fields=MySchema)
+    form.process(DummyPostData(b=["2"]))
+    assert form['b'].data == 2
+    assert form['b'].validate(form)
+    form.process(DummyPostData(b=["b"]))
+    assert form['b'].data is None
+    assert not form['b'].validate(form)
 
 
 def test_iterable_options():
-    form = F()
-    first_option = list(form.a)[0]
-    assert isinstance(first_option, form.a._Option)
-    assert list(str(x) for x in form.a) == [
+    form = Form(fields=MySchema)
+    form.process()
+    first_option = list(form['a'])[0]
+    assert isinstance(first_option, form['a']._Option)
+    assert list(str(x) for x in form['a']) == [
         '<option selected value="a">hello</option>',
         '<option value="btest">bye</option>',
     ]
     assert isinstance(first_option.widget, widgets.Option)
-    assert isinstance(list(form.b)[0].widget, widgets.TextInput)
+    assert isinstance(list(form['b'])[0].widget, widgets.TextInput)
     assert (
         first_option(disabled=True)
         == '<option disabled selected value="a">hello</option>'
@@ -91,90 +91,108 @@ def test_iterable_options():
 
 
 def test_default_coerce():
-    F = make_form(a=SelectField(choices=[("a", "Foo")]))
-    form = F(DummyPostData(a=[]))
+    form = Form(fields={
+        "a": SelectField(choices=[("a", "Foo")])
+    })
+    form.process(DummyPostData(a=[]))
     assert not form.validate()
-    assert form.a.data is None
-    assert len(form.a.errors) == 1
-    assert form.a.errors[0] == "Not a valid choice."
+    assert form['a'].data is None
+    assert len(form['a'].errors) == 1
+    assert form['a'].errors[0] == "Not a valid choice."
 
 
 def test_validate_choices():
-    F = make_form(a=SelectField(choices=[("a", "Foo")]))
-    form = F(DummyPostData(a=["b"]))
+    form = Form(fields={
+        "a": SelectField(choices=[("a", "Foo")])
+    })
+    form.process(DummyPostData(a=["b"]))
     assert not form.validate()
-    assert form.a.data == "b"
-    assert len(form.a.errors) == 1
-    assert form.a.errors[0] == "Not a valid choice."
+    assert form['a'].data == "b"
+    assert len(form['a'].errors) == 1
+    assert form['a'].errors[0] == "Not a valid choice."
 
 
 def test_validate_choices_when_empty():
-    F = make_form(a=SelectField(choices=[]))
-    form = F(DummyPostData(a=["b"]))
+    form = Form(fields={
+        "a": SelectField(choices=[])
+    })
+    form.process(DummyPostData(a=["b"]))
     assert not form.validate()
-    assert form.a.data == "b"
-    assert len(form.a.errors) == 1
-    assert form.a.errors[0] == "Not a valid choice."
+    assert form['a'].data == "b"
+    assert len(form['a'].errors) == 1
+    assert form['a'].errors[0] == "Not a valid choice."
 
 
 def test_validate_choices_when_none():
-    F = make_form(a=SelectField())
-    form = F(DummyPostData(a="b"))
+    form = Form(fields={
+        "a": SelectField()
+    })
+    form.process(DummyPostData(a=["b"]))
     with pytest.raises(TypeError, match="Choices cannot be None"):
         form.validate()
 
 
 def test_dont_validate_choices():
-    F = make_form(a=SelectField(choices=[("a", "Foo")], validate_choice=False))
-    form = F(DummyPostData(a=["b"]))
+    form = Form(fields={
+        "a": SelectField(choices=[("a", "Foo")], validate_choice=False)
+    })
+    form.process(DummyPostData(a=["b"]))
     assert form.validate()
-    assert form.a.data == "b"
-    assert len(form.a.errors) == 0
+    assert form['a'].data == "b"
+    assert len(form['a'].errors) == 0
 
 
 def test_choice_shortcut():
-    F = make_form(a=SelectField(choices=["foo", "bar"], validate_choice=False))
-    form = F(a="bar")
-    assert '<option value="foo">foo</option>' in form.a()
+    form = Form(fields={
+        "a": SelectField(choices=[("foo", "Foo")], validate_choice=False)
+    })
+    form.process(a="bar")
+    assert '<option value="foo">foo</option>' in form['a']()
 
 
 def test_choice_shortcut_post():
-    F = make_form(a=SelectField(choices=["foo", "bar"]))
-    form = F(DummyPostData(a=["foo"]))
+    form = Form(fields={
+        "a": SelectField(choices=["foo", "bar"])
+    })
+    form.process(DummyPostData(a=["foo"]))
     assert form.validate()
-    assert form.a.data == "foo"
-    assert len(form.a.errors) == 0
+    assert form['a'].data == "foo"
+    assert len(form['a'].errors) == 0
 
 
 @pytest.mark.parametrize("choices", [[], None, {}])
 def test_empty_choice(choices):
-    F = make_form(a=SelectField(choices=choices, validate_choice=False))
-    form = F(a="bar")
-    assert form.a() == '<select id="a" name="a"></select>'
+    form = Form(fields={
+        "a": SelectField(choices=choices, validate_choice=False)
+    })
+    form.process(a="bar")
+    assert form['a']() == '<select id="a" name="a"></select>'
 
 
 def test_callable_choices():
     def choices():
         return ["foo", "bar"]
 
-    F = make_form(a=SelectField(choices=choices))
-    form = F(a="bar")
-
-    assert list(str(x) for x in form.a) == [
+    form = Form(fields={
+        "a": SelectField(choices=choices)
+    })
+    form.process(a="bar")
+    assert list(str(x) for x in form['a']) == [
         '<option value="foo">foo</option>',
         '<option selected value="bar">bar</option>',
     ]
 
 
-def test_requried_flag():
-    F = make_form(
-        c=SelectField(
+def test_required_flag():
+
+    form = Form(fields={
+        "c": SelectField(
             choices=[("a", "hello"), ("b", "bye")],
-            validators=[validators.InputRequired()],
+            validators=[validators.InputRequired()]
         )
-    )
-    form = F(DummyPostData(c="a"))
-    assert form.c() == (
+    })
+    form.process(DummyPostData(c="a"))
+    assert form['c']() == (
         '<select id="c" name="c" required>'
         '<option selected value="a">hello</option>'
         '<option value="b">bye</option>'
@@ -183,26 +201,30 @@ def test_requried_flag():
 
 
 def test_required_validator():
-    F = make_form(
-        c=SelectField(
+
+    form = Form(fields={
+        "c": SelectField(
             choices=[("a", "hello"), ("b", "bye")],
-            validators=[validators.InputRequired()],
+            validators=[validators.InputRequired()]
         )
-    )
-    form = F(DummyPostData(c="b"))
+    })
+    form.process(DummyPostData(c="b"))
     assert form.validate()
-    assert form.c.errors == []
-    form = F()
+    assert form['c'].errors == []
+
+    form.process()
     assert form.validate() is False
-    assert form.c.errors == ["This field is required."]
+    assert form['c'].errors == ["This field is required."]
 
 
 def test_render_kw_preserved():
-    F = make_form(
-        a=SelectField(choices=[("foo"), ("bar")], render_kw=dict(disabled=True))
-    )
-    form = F()
-    assert form.a() == (
+    form = Form(fields={
+        'a': SelectField(
+            choices=[("foo"), ("bar")],
+            render_kw=dict(disabled=True))
+    })
+    form.process()
+    assert form['a']() == (
         '<select disabled id="a" name="a">'
         '<option value="foo">foo</option>'
         '<option value="bar">bar</option>'
@@ -211,33 +233,40 @@ def test_render_kw_preserved():
 
 
 def test_optgroup():
-    F = make_form(a=SelectField(choices={"hello": [("a", "Foo")]}))
-    form = F(a="a")
-
+    form = Form(fields={
+        'a': SelectField(choices={"hello": [("a", "Foo")]})
+    })
+    form.process(a="a")
     assert (
         '<optgroup label="hello">'
         '<option selected value="a">Foo</option>'
-        "</optgroup>" in form.a()
+        "</optgroup>" in form['a']()
     )
-    assert list(form.a.iter_choices()) == [("a", "Foo", True)]
+    assert list(form['a'].iter_choices()) == [("a", "Foo", True)]
 
 
 def test_optgroup_shortcut():
-    F = make_form(a=SelectField(choices={"hello": ["foo", "bar"]}))
-    form = F(a="bar")
-
+    form = Form(fields={
+        'a': SelectField(choices={"hello": ["foo", "bar"]})
+    })
+    form.process(a="bar")
     assert (
         '<optgroup label="hello">'
         '<option value="foo">foo</option>'
         '<option selected value="bar">bar</option>'
-        "</optgroup>" in form.a()
+        "</optgroup>" in form['a']()
     )
-    assert list(form.a.iter_choices()) == [("foo", "foo", False), ("bar", "bar", True)]
+    assert list(form['a'].iter_choices()) == [
+        ("foo", "foo", False),
+        ("bar", "bar", True)
+    ]
 
 
 @pytest.mark.parametrize("choices", [[], ()])
 def test_empty_optgroup(choices):
-    F = make_form(a=SelectField(choices={"hello": choices}))
-    form = F(a="bar")
-    assert '<optgroup label="hello"></optgroup>' in form.a()
-    assert list(form.a.iter_choices()) == []
+    form = Form(fields={
+        'a': SelectField(choices={"hello": choices})
+    })
+    form.process(a="bar")
+    assert '<optgroup label="hello"></optgroup>' in form['a']()
+    assert list(form['a'].iter_choices()) == []

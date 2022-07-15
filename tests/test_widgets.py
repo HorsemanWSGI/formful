@@ -1,20 +1,19 @@
 import pytest
 from markupsafe import Markup
-
-from formful.widgets.core import CheckboxInput
-from formful.widgets.core import FileInput
-from formful.widgets.core import HiddenInput
-from formful.widgets.core import html_params
-from formful.widgets.core import Input
-from formful.widgets.core import ListWidget
-from formful.widgets.core import NumberInput
-from formful.widgets.core import PasswordInput
-from formful.widgets.core import RadioInput
-from formful.widgets.core import RangeInput
-from formful.widgets.core import Select
-from formful.widgets.core import TableWidget
-from formful.widgets.core import TextArea
-from formful.widgets.core import TextInput
+from formful.utils import html_params
+from formful.widgets import CheckboxInput
+from formful.widgets import FileInput
+from formful.widgets import HiddenInput
+from formful.widgets import Input
+from formful.widgets import ListWidget
+from formful.widgets import NumberInput
+from formful.widgets import PasswordInput
+from formful.widgets import RadioInput
+from formful.widgets import RangeInput
+from formful.widgets import Select
+from formful.widgets import TableWidget
+from formful.widgets import TextArea
+from formful.widgets import TextInput
 
 
 class TestHTMLParams:

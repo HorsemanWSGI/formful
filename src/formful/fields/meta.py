@@ -9,7 +9,7 @@ from markupsafe import Markup
 
 from formful import widgets
 from formful.i18n import DummyTranslations
-from formful.utils import unset_value
+from formful.utils import unset_value, html_params
 from formful.validators import StopValidation
 from formful.validators import ValidationError
 
@@ -55,7 +55,7 @@ class Label:
         else:
             kwargs.setdefault("for", self.field_id)
 
-        attributes = widgets.html_params(**kwargs)
+        attributes = html_params(**kwargs)
         text = escape(text or self.text)
         return Markup(f"<label {attributes}>{text}</label>")
 

@@ -1,4 +1,4 @@
-from formful.widgets.core import clean_key
+from formful.utils import clean_key
 
 
 class CSRF:

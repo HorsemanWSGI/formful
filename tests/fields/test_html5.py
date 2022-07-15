@@ -1,7 +1,5 @@
 from datetime import date
 from datetime import datetime
-from decimal import Decimal
-
 from tests.common import DummyPostData
 
 from formful import validators
@@ -17,15 +15,11 @@ from formful.fields import StringField
 from formful.fields import TelField
 from formful.fields import TextAreaField
 from formful.fields import URLField
-from formful.form import Form
+from formful.schema import Schema
 from formful.utils import unset_value
 
 
-def make_form(name="F", **fields):
-    return type(str(name), (Form,), fields)
-
-
-class F(Form):
+class Fields(Schema):
     search = SearchField()
     telephone = TelField()
     url = URLField()
@@ -34,9 +28,7 @@ class F(Form):
     date = DateField()
     dt_local = DateTimeLocalField()
     integer = IntegerField()
-    decimal = DecimalField()
     int_range = IntegerRangeField()
-    decimal_range = DecimalRangeField()
 
 
 def _build_value(key, form_input, expected_html, data=unset_value):
@@ -119,7 +111,7 @@ def test_simple():
             raise AssertionError(tmpl.format(field=field, **item))
 
 
-class G(Form):
+class FieldsWithValidators(Schema):
     v1 = [validators.Length(min=1)]
     v2 = [validators.Length(min=1, max=3)]
     string1 = StringField(validators=v1)
@@ -137,14 +129,11 @@ class G(Form):
     integer2 = IntegerField(validators=v4)
     integerrange1 = IntegerRangeField(validators=v3)
     integerrange2 = IntegerRangeField(validators=v4)
-    decimal1 = DecimalField(validators=v3)
-    decimal2 = DecimalField(validators=v4)
-    decimalrange1 = DecimalRangeField(validators=v3)
-    decimalrange2 = DecimalRangeField(validators=v4)
 
 
 def test_minlength_maxlength():
-    form = G()
+    form = Form(FieldsWithValidators)
+    form.process()
     assert (
         form.string1()
         == '<input id="string1" minlength="1" name="string1" type="text" value="">'
@@ -187,7 +176,8 @@ def test_minlength_maxlength():
 
 
 def test_min_max():
-    form = G()
+    form = Form(FieldsWithValidators)
+    form.process()
     assert (
         form.integer1()
         == '<input id="integer1" min="1" name="integer1" type="number" value="">'
@@ -205,24 +195,4 @@ def test_min_max():
     assert (
         form.integerrange2() == '<input id="integerrange2" max="3" min="1"'
         ' name="integerrange2" type="range" value="">'
-    )
-
-    assert (
-        form.decimal1() == '<input id="decimal1" min="1"'
-        ' name="decimal1" step="any" type="number" value="">'
-    )
-
-    assert (
-        form.decimal2() == '<input id="decimal2" max="3" min="1"'
-        ' name="decimal2" step="any" type="number" value="">'
-    )
-
-    assert (
-        form.decimalrange1() == '<input id="decimalrange1" min="1"'
-        ' name="decimalrange1" step="any" type="range" value="">'
-    )
-
-    assert (
-        form.decimalrange2() == '<input id="decimalrange2" max="3" min="1"'
-        ' name="decimalrange2" step="any" type="range" value="">'
     )

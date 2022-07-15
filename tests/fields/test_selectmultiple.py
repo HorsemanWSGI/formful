@@ -55,10 +55,12 @@ def test_with_data():
         ("c", "something", True),
     ]
     assert form['b'].data == []
-    form = F(DummyPostData(b=["1", "2"]))
+
+    form.process(DummyPostData(b=["1", "2"]))
     assert form['b'].data == [1, 2]
     assert form.validate()
-    form = F(DummyPostData(b=["1", "2", "4"]))
+
+    form.process(DummyPostData(b=["1", "2", "4"]))
     assert form['b'].data == [1, 2, 4]
     assert not form.validate()
 
@@ -87,22 +89,22 @@ def test_callable_choices():
 
 
 def test_choice_shortcut():
-    F = make_form(a=SelectMultipleField(choices=["foo", "bar"]))
-    form = F(a=["bar"])
+    form = make_form(a=SelectMultipleField(choices=["foo", "bar"]))
+    form.process(a=["bar"])
     assert form.validate()
     assert '<option value="foo">foo</option>' in form['a']()
 
 
 @pytest.mark.parametrize("choices", [[], None])
 def test_empty_choice(choices):
-    F = make_form(a=SelectMultipleField(choices=choices))
-    form = F(a="bar")
+    form = make_form(a=SelectMultipleField(choices=choices))
+    form.process(a="bar")
     assert form['a']() == '<select id="a" multiple name="a"></select>'
 
 
 def test_validate_choices_when_empty():
-    F = make_form(a=SelectMultipleField(choices=[]))
-    form = F(DummyPostData(a=["b"]))
+    form = make_form(a=SelectMultipleField(choices=[]))
+    form.process(DummyPostData(a=["b"]))
     assert not form.validate()
     assert form['a'].data == ["b"]
     assert len(form['a'].errors) == 1
@@ -110,8 +112,8 @@ def test_validate_choices_when_empty():
 
 
 def test_validate_choices_when_none():
-    F = make_form(a=SelectMultipleField())
-    form = F(DummyPostData(a="b"))
+    form = make_form(a=SelectMultipleField())
+    form.process(DummyPostData(a="b"))
     with pytest.raises(TypeError, match="Choices cannot be None"):
         form.validate()
 
@@ -134,8 +136,7 @@ def test_requried_flag():
             validators=[validators.InputRequired()],
         )
     )
-    form.process()
-    (DummyPostData(c=["a"]))
+    form.process(DummyPostData(c=["a"]))
     assert form['c']() == (
         '<select id="c" multiple name="c" required>'
         '<option selected value="a">hello</option>'
